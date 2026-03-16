@@ -1,0 +1,57 @@
+# Resolved experiment configuration — FP-13 Model Behavioral Fingerprinting
+# Generated: 2026-03-16
+# Source: project.yaml + script defaults
+
+project:
+  name: model-behavioral-fingerprint
+  id: FP-13
+  paradigm: unsupervised-learning
+  profile: contract-track
+  govml_version: "2.5"
+
+synthetic_data:
+  n_clean: 160
+  n_backdoored: 40
+  n_features: 512
+  trigger_dims: 51          # dims 0-50 inclusive
+  trigger_shift: 0.5
+  default_seed: 42
+
+detectors:
+  - isolation_forest
+  - one_class_svm
+  - gmm
+  - autoencoder
+  - pca_mahalanobis
+  - lof
+
+representations:
+  - raw
+  - pca              # retain 95% variance
+  - ica              # n_components = min(50, n_features)
+  - umap             # n_components = 50
+  - random_projection # n_components = 50, JL-lemma
+
+seeds: [42, 123, 456, 789, 1024]
+
+experiment_matrix:
+  total_runs: 150   # 6 detectors x 5 representations x 5 seeds
+
+contrastive:
+  architecture: "512 -> 256 -> 128 -> 64"
+  loss: NT-Xent
+  seeds: [42, 123, 456, 789, 1024]
+
+trust_score:
+  range: [0, 100]
+  thresholds:
+    low_risk: 30
+    medium_risk: 60
+    high_risk: 100
+
+outputs:
+  features: outputs/features/
+  detection: outputs/detection/
+  contrastive: outputs/contrastive/
+  provenance: outputs/provenance/
+  figures: figures/
