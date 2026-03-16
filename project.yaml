@@ -1,0 +1,30 @@
+project:
+  name: model-behavioral-fingerprint
+  id: FP-13
+  paradigm: unsupervised-learning
+  profile: contract-track
+
+govml:
+  version: "2.5"
+  templates:
+    - EXPERIMENT_CONTRACT
+    - DATA_CONTRACT
+    - HYPOTHESIS_REGISTRY
+    - PRODUCT_SPEC
+    - ADVERSARIAL_EVALUATION
+    - A_PLUS_CHECKLIST
+
+experiment:
+  matrix:
+    detectors: [isolation_forest, one_class_svm, gmm, autoencoder, pca_mahalanobis, lof]
+    representations: [raw, pca, ica, umap, random_projection]
+    seeds: [42, 123, 456, 789, 1024]
+  total_runs: 150  # 6 x 5 x 5
+
+quality_gates:
+  - G0: hypothesis_preregistration
+  - G1: experiment_contract
+  - G2: adversarial_evaluation
+  - G3: ul_breadth
+  - G4: reproducibility
+  - G5: publication

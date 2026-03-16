@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
+*.env
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Outputs
+outputs/*.npz
+outputs/*.json
+outputs/figures/
+!outputs/.gitkeep
+
+# Data (large files)
+data/
+models/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage

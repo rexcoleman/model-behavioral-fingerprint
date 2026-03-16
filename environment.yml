@@ -1,0 +1,21 @@
+name: model-fingerprint
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - pandas
+  - pytest
+  - pytest-cov
+  - pyyaml
+  - pip
+  - pip:
+    - torch --index-url https://download.pytorch.org/whl/cpu
+    - fastapi
+    - uvicorn[standard]
+    - umap-learn
