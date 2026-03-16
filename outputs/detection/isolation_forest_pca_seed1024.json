@@ -1,0 +1,14 @@
+{
+  "detector": "isolation_forest",
+  "representation": "pca",
+  "seed": 1024,
+  "auroc": 0.4922,
+  "detection_rate_fpr05": 0.25,
+  "detection_rate_fpr10": 0.25,
+  "n_train_clean": 128,
+  "n_test": 40,
+  "n_test_backdoor": 8,
+  "mean_score_clean": 0.3812,
+  "mean_score_backdoor": 0.3819,
+  "runtime_seconds": 0.295
+}

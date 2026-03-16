@@ -1,0 +1,14 @@
+{
+  "detector": "lof",
+  "representation": "raw",
+  "seed": 456,
+  "auroc": 0.668,
+  "detection_rate_fpr05": 0.375,
+  "detection_rate_fpr10": 0.625,
+  "n_train_clean": 128,
+  "n_test": 40,
+  "n_test_backdoor": 8,
+  "mean_score_clean": 1.0056,
+  "mean_score_backdoor": 1.0125,
+  "runtime_seconds": 0.008
+}

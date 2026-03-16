@@ -1,0 +1,13 @@
+{
+  "method": "contrastive_simclr",
+  "seed": 42,
+  "auroc": 0.4245,
+  "detection_rate_fpr05": 0.025,
+  "detection_rate_fpr10": 0.05,
+  "final_loss": 2.914,
+  "n_clean_train": 160,
+  "n_total": 200,
+  "embedding_dim": 64,
+  "runtime_seconds": 4.67,
+  "backend": "pytorch"
+}

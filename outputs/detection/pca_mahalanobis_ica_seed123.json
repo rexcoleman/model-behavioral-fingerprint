@@ -1,0 +1,14 @@
+{
+  "detector": "pca_mahalanobis",
+  "representation": "ica",
+  "seed": 123,
+  "auroc": 0.5,
+  "detection_rate_fpr05": 0.125,
+  "detection_rate_fpr10": 0.125,
+  "n_train_clean": 128,
+  "n_test": 40,
+  "n_test_backdoor": 8,
+  "mean_score_clean": 2.88,
+  "mean_score_backdoor": 2.9249,
+  "runtime_seconds": 0.008
+}
