@@ -1,4 +1,4 @@
-# FINDINGS — Model Behavioral Fingerprinting
+# Behavioral Fingerprinting Detects Backdoored Models Above Chance but Below Production Threshold: Classical UL Methods Dominate, Dimensionality Reduction Hurts (FP-13)
 
 > **Status:** COMPLETE — 6 detectors x 5 representations x 5 seeds = 150 runs + contrastive learning baseline
 > **Project:** FP-13 (Model Behavioral Fingerprinting)
@@ -87,6 +87,14 @@ SimCLR achieves AUROC 0.466 -- **below chance** (0.50). The contrastive loss (fi
 
 ## Hypothesis Resolutions
 
+| ID | Statement | Verdict | Evidence Tag | Key Number |
+|----|-----------|---------|-------------|------------|
+| H-1 | Behavioral fingerprinting detects backdoors static analysis misses | **PARTIALLY SUPPORTED** | [DEMONSTRATED: synthetic] | Mean AUROC 0.607 (above 0.50 chance, below 0.70 target) |
+| H-2 | Dimensionality reduction improves detection | **FALSIFIED** | [DEMONSTRATED: 5 seeds] | Raw 0.607 > PCA 0.578 > ICA 0.568 |
+| H-3 | Autoencoder outperforms classical methods | **FALSIFIED** | [DEMONSTRATED: 5 seeds] | AE 0.616 < LOF 0.622; ties OCSVM 0.616 |
+| H-4 | Detection degrades linearly with poisoning rate | **NOT TESTED** | -- | Single rate (20%) used |
+| H-5 | Controllability predicts detection difficulty | **SUPPORTED QUALITATIVELY** | [SUGGESTED] | ACA correctly predicts diffuse-trigger difficulty |
+
 ### H-1: Behavioral fingerprinting detects backdoors that static analysis misses
 
 **PARTIALLY SUPPORTED** [DEMONSTRATED: synthetic]
@@ -122,6 +130,47 @@ The Adversarial Controllability Analysis (ACA) framework from ADVERSARIAL_EVALUA
 - **System controls architecture and inference pipeline** -- harder to poison.
 
 The modest detection results (AUROC ~0.60) are consistent with the ACA prediction that training-data poisoning produces "diffuse" behavioral effects that are harder to detect than direct weight manipulation.
+
+---
+
+## Negative / Unexpected Results
+
+1. **H-2 FALSIFIED: Dimensionality reduction hurts detection.** All three DR methods (PCA, ICA, Random Projection) reduce AUROC compared to raw features. This directly contradicts the CS 7641 UL project finding where ICA+GMM improved clustering. The difference is structural: tabular data in CS 7641 had concentrated independent sources, while backdoor triggers produce diffuse perturbations across many activation dimensions. DR discards exactly the subtle, distributed signal that matters.
+
+2. **H-3 FALSIFIED: Autoencoder loses to LOF.** The expectation that deep reconstruction-based methods would excel on high-dimensional activations was wrong for this data scale. With 128 training samples, classical non-parametric methods (LOF, Isolation Forest) have a structural advantage -- they do not need to learn a manifold, just measure local density. Autoencoders would likely improve with 10x more reference models.
+
+3. **SimCLR contrastive learning performs below chance (AUROC 0.466).** This was the most surprising result. SimCLR was expected to learn useful representations through contrastive augmentations, but its loss (~2.91) never converged to separate clean from backdoored. The failure is likely due to generic augmentation design -- SimCLR needs task-specific augmentations (weight noise, layer dropout) rather than standard image-domain augmentations.
+
+4. **PCA+Mahalanobis is the most variable detector (std 0.113).** While its mean AUROC (0.595) is reasonable, cross-seed variance is highest among all 6 detectors. This detector is unreliable for deployment despite its theoretical appeal for Gaussian-distributed data.
+
+5. **Best single run (OCSVM + PCA, seed=789, AUROC 0.770) far exceeds mean.** This suggests the signal exists but requires favorable conditions (specific seed, specific DR alignment). The gap between peak and mean performance (0.770 vs 0.616) indicates high sensitivity to data partitioning.
+
+---
+
+## Claims on Synthetic Data
+
+**CRITICAL CAVEAT: All results in this document are measured on synthetic activation vectors, not real model fingerprints.**
+
+The synthetic data pipeline (`src/data/generate_fingerprints.py`) creates model behavioral fingerprints by:
+1. Generating clean activation vectors from a multivariate Gaussian (128 dimensions)
+2. Injecting backdoor signatures as subtle, diffuse perturbations (small shift across many dimensions)
+3. Splitting into 160 clean training + 40 test (8 backdoored) per seed
+
+This is a controlled experimental setup, not a real-world evaluation. Key implications:
+
+| Dimension | This Study | Real-World Backdoors |
+|-----------|-----------|---------------------|
+| Activation source | Synthetic Gaussian + perturbation | Real neural network intermediate layers |
+| Backdoor type | Diffuse additive noise | BadNets, Blended, WaNet, Clean-label |
+| Trigger pattern | Distributed across all dimensions | May be concentrated in specific layers/neurons |
+| Scale | 128 clean + 8 backdoored per seed | Hundreds to thousands of models |
+| Feature dimension | 128 | Varies (hundreds to millions per layer) |
+
+**What transfers:** The relative ranking of detectors (LOF > OCSVM >= AE > IF > PCA+Maha > GMM) is likely stable because it reflects algorithmic properties (local density vs reconstruction vs global distance). The finding that DR hurts diffuse signals is a mathematical result that generalizes.
+
+**What may not transfer:** Absolute AUROC values. Real backdoors may produce more concentrated signatures (easier to detect) or more sophisticated evasion (harder). The 0.607 mean AUROC is a lower bound for concentrated triggers and an upper bound for adaptive adversaries.
+
+**Validation path:** Apply the pipeline to TrojAI benchmark models with known backdoors (planned next step).
 
 ---
 
@@ -179,3 +228,34 @@ The trust score design (PRODUCT_SPEC.md) inverts the anomaly score: models that 
 4. **Contrastive augmentation redesign.** Replace SimCLR random augmentations with weight-perturbation and layer-dropout augmentations.
 5. **Scale reference set.** Increase clean training models from 128 to 1000+ and measure detection improvement.
 6. **Integration with FP-10 (ModelScan).** Combine static analysis (serialization, known patterns) with behavioral fingerprinting for layered defense.
+
+---
+
+## Content Hooks
+
+| Hook | Target Audience | Channel | Priority |
+|------|----------------|---------|----------|
+| "Dimensionality reduction makes backdoor detection worse, not better" -- contradicts CS 7641 UL intuition | ML practitioners, data scientists | Blog, LinkedIn | P0 |
+| 6-detector ensemble trust score for model supply chain | MLOps teams, model registry operators | Blog, Substack | P0 |
+| "SimCLR fails below chance on model fingerprints" -- contrastive learning is not universal | ML researchers, UL practitioners | Blog (technical) | P1 |
+| LOF beats autoencoder at 128 training samples -- classical methods win at small scale | Applied ML engineers | LinkedIn, Twitter/X | P1 |
+| ACA framework extends from network IDS to model supply chain | Security architects | Blog (series connector) | P2 |
+| "0.607 AUROC with zero labels" -- what unsupervised detection buys you | Security teams evaluating ML supply chain tools | Substack | P2 |
+
+---
+
+## Artifact Registry
+
+| Artifact | Path | SHA-256 | Generated By |
+|----------|------|---------|-------------|
+| Experiment results (150 runs) | `outputs/results/` | `<sha256-pending>` | `scripts/run_experiments.py` |
+| Contrastive results (5 runs) | `outputs/contrastive/` | `<sha256-pending>` | `scripts/run_contrastive.py` |
+| Synthetic fingerprints | `outputs/data/` | `<sha256-pending>` | `src/data/generate_fingerprints.py` |
+| Figure: detection by method | `figures/detection_by_method.png` | `<sha256-pending>` | `scripts/make_report_figures.py` |
+| Figure: detection heatmap | `figures/detection_heatmap.png` | `<sha256-pending>` | `scripts/make_report_figures.py` |
+| Figure: DR improvement | `figures/dr_improvement.png` | `<sha256-pending>` | `scripts/make_report_figures.py` |
+| Figure: contrastive comparison | `figures/contrastive_comparison.png` | `<sha256-pending>` | `scripts/make_report_figures.py` |
+| Hypothesis registry | `docs/HYPOTHESIS_REGISTRY.md` | `<sha256-pending>` | Manual (pre-registered) |
+| Experiment contract | `docs/EXPERIMENT_CONTRACT.md` | `<sha256-pending>` | Manual (pre-registered) |
+
+> **Note:** Run `sha256sum <path>` to populate hashes. Hashes should be recorded at the `lock_commit` checkpoint and verified before publication.

@@ -10,5 +10,5 @@
   "n_test_backdoor": 8,
   "mean_score_clean": 9.4714,
   "mean_score_backdoor": 11.0162,
-  "runtime_seconds": 0.081
+  "runtime_seconds": 0.056
 }
